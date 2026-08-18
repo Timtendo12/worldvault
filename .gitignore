@@ -1,0 +1,65 @@
+# gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# fabric / loom
+run/
+runs/
+remappedSrc/
+.fabric/
+*.classpath.txt
+
+# java
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+hs_err_pid*
+replay_pid*
+
+# secrets
+.env
+.env.*
+proxy/.dev.vars
+proxy/.dev.vars.*
+credentials/
+*.dpapi
+config/worldvault/
+sync-state.json
+
+# node / worker
+node_modules/
+proxy/dist/
+proxy/.wrangler/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ide
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+*.launch
+bin/
+nbproject/
+
+# os
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+*.log
+*.tmp
+*.bak

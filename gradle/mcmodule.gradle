@@ -1,0 +1,78 @@
+// each module sets its own loom plugin id and ext.* before applying this
+def javaVer = project.ext.javaVersion as int
+
+// modrinth and curseforge expect the mc versions in the mod version
+version = "${project.mod_version}+${project.ext.mcLabel}"
+
+repositories {
+	mavenCentral()
+}
+
+sourceSets.main.java.srcDir rootProject.file('platform-common/src/main/java')
+
+configurations {
+	shade
+	implementation.extendsFrom shade
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.ext.mcVersion}"
+
+	if (project.ext.obfuscated) {
+		// mojang mappings, not yarn, so both modules read the same as 26.x natively
+		mappings loom.layered {
+			officialMojangMappings()
+		}
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${project.ext.fabricApiVersion}"
+	} else {
+		implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		implementation "net.fabricmc.fabric-api:fabric-api:${project.ext.fabricApiVersion}"
+	}
+
+	shade project(':core')
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(javaVer)
+	}
+	withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = javaVer
+	it.options.encoding = 'UTF-8'
+}
+
+processResources {
+	def props = [
+		version         : project.version,
+		minecraftVersion: project.ext.mcVersion,
+		minecraftRange  : project.ext.mcRange,
+		loaderVersion   : project.loader_version,
+		javaVersion     : javaVer.toString(),
+	]
+	inputs.properties props
+	filesMatching('fabric.mod.json') {
+		expand props
+	}
+}
+
+base {
+	archivesName = project.mod_id
+}
+
+jar {
+	// the lazy from closure below hides the producer task from gradle
+	dependsOn configurations.shade
+
+	from {
+		configurations.shade.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+	exclude 'META-INF/MANIFEST.MF', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+
+	from(rootProject.file('LICENSE')) {
+		rename { "${it}_worldvault" }
+	}
+}

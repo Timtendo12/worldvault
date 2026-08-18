@@ -1,0 +1,14 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap'
+}
+
+ext {
+	mcVersion        = project.mc_12111_minecraft
+	mcRange          = project.mc_12111_range
+	mcLabel          = project.mc_12111_label
+	javaVersion      = project.mc_12111_java
+	fabricApiVersion = project.mc_12111_fabric_api
+	obfuscated       = true
+}
+
+apply from: rootProject.file('gradle/mcmodule.gradle')

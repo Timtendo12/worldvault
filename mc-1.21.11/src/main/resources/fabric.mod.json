@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "worldvault",
+  "version": "${version}",
+  "name": "WorldVault",
+  "description": "Syncs your singleplayer worlds to Google Drive, OneDrive or Dropbox, and shows the sync state on the world list.",
+  "authors": [ "Tim Slager" ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/worldvault/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [ "net.moonbowstudios.worldvault.WorldVaultClient" ]
+  },
+  "mixins": [
+    { "config": "worldvault.mixins.json", "environment": "client" }
+  ],
+  "depends": {
+    "fabricloader": ">=${loaderVersion}",
+    "minecraft": "${minecraftRange}",
+    "java": ">=${javaVersion}",
+    "fabric-api": "*"
+  }
+}

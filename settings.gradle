@@ -1,0 +1,21 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+plugins {
+	// the modules ask for jdk 21 and 25, so let gradle fetch them
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'worldvault'
+
+include 'core'
+include 'mc-1.21.11'
+include 'mc-26.2'

@@ -1,0 +1,7 @@
+name = "worldvault-token-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# secret: npx wrangler secret put GOOGLE_CLIENT_SECRET
+[vars]
+GOOGLE_CLIENT_ID = ""

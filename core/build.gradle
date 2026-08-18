@@ -1,0 +1,50 @@
+plugins {
+	id 'java-library'
+}
+
+repositories {
+	mavenCentral()
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(project.core_java as int)
+	}
+	withSourcesJar()
+}
+
+dependencies {
+	// both target versions ship these; pinned to the lower one so core cannot outrun it
+	compileOnly 'com.google.code.gson:gson:2.13.2'
+	compileOnly 'net.java.dev.jna:jna:5.17.0'
+	compileOnly 'net.java.dev.jna:jna-platform:5.17.0'
+	compileOnly 'org.slf4j:slf4j-api:2.0.17'
+
+	testImplementation 'com.google.code.gson:gson:2.13.2'
+	testImplementation 'net.java.dev.jna:jna:5.17.0'
+	testImplementation 'net.java.dev.jna:jna-platform:5.17.0'
+	testImplementation 'org.slf4j:slf4j-api:2.0.17'
+	testImplementation 'org.slf4j:slf4j-simple:2.0.17'
+	testImplementation platform('org.junit:junit-bom:5.11.4')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.register('harness', JavaExec) {
+	group = 'verification'
+	description = 'Exercises snapshot, upload, download and verification against a linked account.'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'net.moonbowstudios.worldvault.core.SyncHarnessMain'
+	standardInput = System.in
+}
+
+tasks.named('test', Test) {
+	useJUnitPlatform()
+	testLogging { events 'passed', 'skipped', 'failed' }
+
+	// gradle keeps -D on its own jvm, so forward it to the forked test jvm
+	def keychainIt = System.getProperty('worldvault.keychain.it')
+	if (keychainIt != null) {
+		systemProperty 'worldvault.keychain.it', keychainIt
+	}
+}

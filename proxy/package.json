@@ -1,0 +1,16 @@
+{
+  "name": "worldvault-token-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stateless proxy that appends WorldVault's Google OAuth client secret. Stores nothing.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "secret": "wrangler secret put GOOGLE_CLIENT_SECRET"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260101.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "net.moonbowstudios.worldvault.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "injectors": { "defaultRequire": 1 },
+  "client": [
+    "SelectWorldScreenMixin",
+    "WorldListEntryMixin"
+  ],
+  "mixins": [
+    "MinecraftServerAccessor"
+  ]
+}

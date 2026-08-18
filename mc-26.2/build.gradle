@@ -1,0 +1,14 @@
+plugins {
+	id 'net.fabricmc.fabric-loom'
+}
+
+ext {
+	mcVersion        = project.mc_262_minecraft
+	mcRange          = project.mc_262_range
+	mcLabel          = project.mc_262_label
+	javaVersion      = project.mc_262_java
+	fabricApiVersion = project.mc_262_fabric_api
+	obfuscated       = false
+}
+
+apply from: rootProject.file('gradle/mcmodule.gradle')
