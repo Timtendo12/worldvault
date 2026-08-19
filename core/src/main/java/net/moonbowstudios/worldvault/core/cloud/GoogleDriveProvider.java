@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class GoogleDriveProvider implements CloudProvider {
 
-	private static final String API = "https://www.googleapis.com/drive/v3";
-	private static final String UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
+	private static final String DEFAULT_API = "https://www.googleapis.com/drive/v3";
+	private static final String DEFAULT_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
 
 	private static final String FOLDER_MIME = "application/vnd.google-apps.folder";
 	private static final String ROOT_FOLDER_NAME = "WorldVault";
@@ -38,9 +38,19 @@ public final class GoogleDriveProvider implements CloudProvider {
 
 	private final CloudHttp http;
 	private final Map<String, String> folderIds = new ConcurrentHashMap<>();
+	private final Object folderLock = new Object();
+
+	private final String api;
+	private final String uploadApi;
 
 	public GoogleDriveProvider(CloudHttp http) {
+		this(http, DEFAULT_API, DEFAULT_UPLOAD_API);
+	}
+
+	GoogleDriveProvider(CloudHttp http, String api, String uploadApi) {
 		this.http = http;
+		this.api = api;
+		this.uploadApi = uploadApi;
 	}
 
 	@Override
@@ -72,7 +82,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 		}
 
 		HttpResponse<byte[]> response = http.send(
-			() -> HttpRequest.newBuilder(URI.create(API + "/files/" + fileId.get() + "?alt=media"))
+			() -> HttpRequest.newBuilder(URI.create(api + "/files/" + fileId.get() + "?alt=media"))
 				.timeout(Duration.ofMinutes(2)).GET(),
 			HttpResponse.BodyHandlers.ofByteArray());
 		return Optional.of(response.body());
@@ -141,7 +151,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 			Files.createDirectories(target.getParent());
 
 			HttpResponse<Path> response = http.sendFollowingRedirects(
-				() -> HttpRequest.newBuilder(URI.create(API + "/files/" + fileId + "?alt=media"))
+				() -> HttpRequest.newBuilder(URI.create(api + "/files/" + fileId + "?alt=media"))
 					.timeout(Duration.ofMinutes(30)).GET(),
 				HttpResponse.BodyHandlers.ofFile(temp));
 
@@ -168,17 +178,19 @@ public final class GoogleDriveProvider implements CloudProvider {
 
 	@Override
 	public void deleteFolder(String path) throws CloudException {
-		String parentPath = parentOf(path);
-		String name = nameOf(path);
-		Optional<String> parentId = resolveFolder(parentPath, false);
-		if (parentId.isEmpty()) {
-			return;
-		}
+		synchronized (folderLock) {
+			String parentPath = parentOf(path);
+			String name = nameOf(path);
+			Optional<String> parentId = resolveFolder(parentPath, false);
+			if (parentId.isEmpty()) {
+				return;
+			}
 
-		Optional<String> folderId = childId(parentId.get(), name, true);
-		if (folderId.isPresent()) {
-			deleteById(folderId.get());
-			folderIds.keySet().removeIf(key -> key.equals(path) || key.startsWith(path + "/"));
+			Optional<String> folderId = childId(parentId.get(), name, true);
+			if (folderId.isPresent()) {
+				deleteById(folderId.get());
+				folderIds.keySet().removeIf(key -> key.equals(path) || key.startsWith(path + "/"));
+			}
 		}
 	}
 
@@ -199,8 +211,8 @@ public final class GoogleDriveProvider implements CloudProvider {
 		// simple upload cannot set a name and parent in one request
 		byte[] body = multipartBody(boundary, GSON.toJson(metadata), content);
 		String url = existing
-			.map(fileId -> UPLOAD_API + "/files/" + fileId + "?uploadType=multipart")
-			.orElse(UPLOAD_API + "/files?uploadType=multipart");
+			.map(fileId -> uploadApi + "/files/" + fileId + "?uploadType=multipart")
+			.orElse(uploadApi + "/files?uploadType=multipart");
 
 		http.send(() -> {
 			HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url))
@@ -226,8 +238,8 @@ public final class GoogleDriveProvider implements CloudProvider {
 		}
 
 		String url = existing
-			.map(fileId -> UPLOAD_API + "/files/" + fileId + "?uploadType=resumable")
-			.orElse(UPLOAD_API + "/files?uploadType=resumable");
+			.map(fileId -> uploadApi + "/files/" + fileId + "?uploadType=resumable")
+			.orElse(uploadApi + "/files?uploadType=resumable");
 
 		HttpResponse<String> response = http.send(() -> {
 			HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url))
@@ -250,13 +262,20 @@ public final class GoogleDriveProvider implements CloudProvider {
 			return cached;
 		}
 
-		String query = "name = '" + escapeQuery(ROOT_FOLDER_NAME) + "'"
-			+ " and mimeType = '" + FOLDER_MIME + "' and trashed = false and 'root' in parents";
+		synchronized (folderLock) {
+			String known = folderIds.get("");
+			if (known != null) {
+				return known;
+			}
 
-		Optional<String> found = firstIdMatching(query);
-		String id = found.isPresent() ? found.get() : createFolder(ROOT_FOLDER_NAME, "root");
-		folderIds.put("", id);
-		return id;
+			String query = "name = '" + escapeQuery(ROOT_FOLDER_NAME) + "'"
+				+ " and mimeType = '" + FOLDER_MIME + "' and trashed = false and 'root' in parents";
+
+			Optional<String> found = firstIdMatching(query);
+			String id = found.isPresent() ? found.get() : createFolder(ROOT_FOLDER_NAME, "root");
+			folderIds.put("", id);
+			return id;
+		}
 	}
 
 	private Optional<String> resolveFolder(String path, boolean create) throws CloudException {
@@ -268,36 +287,43 @@ public final class GoogleDriveProvider implements CloudProvider {
 			return Optional.of(cached);
 		}
 
-		String parentId = rootFolderId();
-		StringBuilder walked = new StringBuilder();
-
-		for (String segment : path.split("/")) {
-			if (segment.isEmpty()) {
-				continue;
-			}
-			if (!walked.isEmpty()) {
-				walked.append('/');
-			}
-			walked.append(segment);
-
-			String key = walked.toString();
-			String known = folderIds.get(key);
-			if (known != null) {
-				parentId = known;
-				continue;
+		synchronized (folderLock) {
+			String resolved = folderIds.get(path);
+			if (resolved != null) {
+				return Optional.of(resolved);
 			}
 
-			Optional<String> childId = childId(parentId, segment, true);
-			if (childId.isEmpty()) {
-				if (!create) {
-					return Optional.empty();
+			String parentId = rootFolderId();
+			StringBuilder walked = new StringBuilder();
+
+			for (String segment : path.split("/")) {
+				if (segment.isEmpty()) {
+					continue;
 				}
-				childId = Optional.of(createFolder(segment, parentId));
+				if (!walked.isEmpty()) {
+					walked.append('/');
+				}
+				walked.append(segment);
+
+				String key = walked.toString();
+				String known = folderIds.get(key);
+				if (known != null) {
+					parentId = known;
+					continue;
+				}
+
+				Optional<String> childId = childId(parentId, segment, true);
+				if (childId.isEmpty()) {
+					if (!create) {
+						return Optional.empty();
+					}
+					childId = Optional.of(createFolder(segment, parentId));
+				}
+				folderIds.put(key, childId.get());
+				parentId = childId.get();
 			}
-			folderIds.put(key, childId.get());
-			parentId = childId.get();
+			return Optional.of(parentId);
 		}
-		return Optional.of(parentId);
 	}
 
 	private Optional<String> findFileId(String path) throws CloudException {
@@ -318,7 +344,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 	}
 
 	private Optional<String> firstIdMatching(String query) throws CloudException {
-		String url = API + "/files?pageSize=1&fields=files(id,name)&q="
+		String url = api + "/files?pageSize=1&fields=files(id,name)&q="
 			+ net.moonbowstudios.worldvault.core.util.Http.encode(query);
 
 		HttpResponse<String> response = http.send(
@@ -340,7 +366,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 		String pageToken = null;
 
 		do {
-			String url = API + "/files?pageSize=200&fields=nextPageToken,files(id,name)&q="
+			String url = api + "/files?pageSize=200&fields=nextPageToken,files(id,name)&q="
 				+ net.moonbowstudios.worldvault.core.util.Http.encode(query)
 				+ (pageToken != null ? "&pageToken=" + pageToken : "");
 
@@ -370,7 +396,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 		metadata.add("parents", parents);
 
 		HttpResponse<String> response = http.send(
-			() -> HttpRequest.newBuilder(URI.create(API + "/files?fields=id"))
+			() -> HttpRequest.newBuilder(URI.create(api + "/files?fields=id"))
 				.timeout(Duration.ofMinutes(1))
 				.header("Content-Type", "application/json; charset=UTF-8")
 				.POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(metadata), StandardCharsets.UTF_8)),
@@ -380,7 +406,7 @@ public final class GoogleDriveProvider implements CloudProvider {
 	}
 
 	private void deleteById(String fileId) throws CloudException {
-		http.send(() -> HttpRequest.newBuilder(URI.create(API + "/files/" + fileId))
+		http.send(() -> HttpRequest.newBuilder(URI.create(api + "/files/" + fileId))
 			.timeout(Duration.ofMinutes(1)).DELETE(), HttpResponse.BodyHandlers.ofString());
 	}
 
