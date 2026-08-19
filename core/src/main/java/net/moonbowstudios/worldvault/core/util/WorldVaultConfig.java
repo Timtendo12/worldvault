@@ -5,84 +5,117 @@ import com.google.gson.GsonBuilder;
 import net.moonbowstudios.worldvault.core.auth.ProviderConfig;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
 public final class WorldVaultConfig {
 
-	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-	public String activeProvider;
+    // generated at build time from secrets.properties; empty in a clone that has none
+    private static final Properties BUILT_IN = builtInDefaults();
 
-	public boolean syncEnabled = true;
+    public String activeProvider;
 
-	public int intervalMinutes = 15;
+    public boolean syncEnabled = true;
 
-	public boolean syncOnWorldClose = true;
+    public int intervalMinutes = 15;
 
-	public boolean syncWhilePlaying = true;
+    public boolean syncOnWorldClose = true;
 
-	public String deviceId = UUID.randomUUID().toString();
+    public boolean syncWhilePlaying = true;
 
-	public String deviceName = "This computer";
+    public String deviceId = UUID.randomUUID().toString();
 
-	public Set<String> pausedWorlds = new LinkedHashSet<>();
+    public String deviceName = "This computer";
 
-	public boolean allowPlaintextCredentials = false;
+    public Set<String> pausedWorlds = new LinkedHashSet<>();
 
-	// blank so a fork does not share another project's api quota; register your own
-	public String dropboxClientId = "";
-	public String googleClientId = "";
+    public boolean allowPlaintextCredentials = false;
 
-	public String googleTokenEndpoint = "";
+    public String dropboxClientId = builtIn("dropbox.clientId");
+    public String googleClientId = builtIn("google.clientId");
 
-	public static WorldVaultConfig load(Path configDir) throws IOException {
-		Path file = file(configDir);
-		if (!Files.exists(file)) {
-			WorldVaultConfig fresh = new WorldVaultConfig();
-			fresh.save(configDir);
-			return fresh;
-		}
+    public String googleTokenEndpoint = builtIn("google.tokenEndpoint");
 
-		String json = Files.readString(file, StandardCharsets.UTF_8);
-		WorldVaultConfig config = GSON.fromJson(json, WorldVaultConfig.class);
-		if (config == null) {
-			return new WorldVaultConfig();
-		}
-		if (config.deviceId == null || config.deviceId.isBlank()) {
-			config.deviceId = UUID.randomUUID().toString();
-		}
-		if (config.pausedWorlds == null) {
-			config.pausedWorlds = new LinkedHashSet<>();
-		}
-		return config;
-	}
+    public static WorldVaultConfig load(Path configDir) throws IOException {
+        Path file = file(configDir);
+        if (!Files.exists(file)) {
+            WorldVaultConfig fresh = new WorldVaultConfig();
+            fresh.save(configDir);
+            return fresh;
+        }
 
-	public void save(Path configDir) throws IOException {
-		Path file = file(configDir);
-		Files.createDirectories(file.getParent());
-		Files.writeString(file, GSON.toJson(this), StandardCharsets.UTF_8);
-	}
+        String json = Files.readString(file, StandardCharsets.UTF_8);
+        WorldVaultConfig config = GSON.fromJson(json, WorldVaultConfig.class);
+        if (config == null) {
+            return new WorldVaultConfig();
+        }
+        if (config.deviceId == null || config.deviceId.isBlank()) {
+            config.deviceId = UUID.randomUUID().toString();
+        }
+        if (config.pausedWorlds == null) {
+            config.pausedWorlds = new LinkedHashSet<>();
+        }
+        if (isBlank(config.dropboxClientId)) {
+            config.dropboxClientId = builtIn("dropbox.clientId");
+        }
+        if (isBlank(config.googleClientId)) {
+            config.googleClientId = builtIn("google.clientId");
+        }
+        if (isBlank(config.googleTokenEndpoint)) {
+            config.googleTokenEndpoint = builtIn("google.tokenEndpoint");
+        }
+        return config;
+    }
 
-	private static Path file(Path configDir) {
-		return configDir.resolve("config.json");
-	}
+    public void save(Path configDir) throws IOException {
+        Path file = file(configDir);
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, GSON.toJson(this), StandardCharsets.UTF_8);
+    }
 
-	public ProviderConfig providerConfig(String providerId) {
-		return switch (providerId) {
-			case "dropbox" -> dropboxClientId.isBlank() ? null
-				: ProviderConfig.dropbox(dropboxClientId);
-			case "googledrive" -> googleClientId.isBlank() || googleTokenEndpoint.isBlank() ? null
-				: ProviderConfig.googleDrive(googleClientId, googleTokenEndpoint);
-			default -> null;
-		};
-	}
+    private static Path file(Path configDir) {
+        return configDir.resolve("config.json");
+    }
 
-	public boolean isPaused(String levelId) {
-		return pausedWorlds.contains(levelId);
-	}
+    private static Properties builtInDefaults() {
+        Properties props = new Properties();
+        try (InputStream in =
+                 WorldVaultConfig.class.getResourceAsStream("/worldvault-clients.properties")) {
+            if (in != null) {
+                props.load(in);
+            }
+        } catch (IOException ignored) {
+        }
+        return props;
+    }
+
+    private static String builtIn(String key) {
+        return BUILT_IN.getProperty(key, "").trim();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    public ProviderConfig providerConfig(String providerId) {
+        return switch (providerId) {
+            case "dropbox" -> dropboxClientId.isBlank() ? null
+                    : ProviderConfig.dropbox(dropboxClientId);
+            case "googledrive" -> googleClientId.isBlank() || googleTokenEndpoint.isBlank() ? null
+                    : ProviderConfig.googleDrive(googleClientId, googleTokenEndpoint);
+            default -> null;
+        };
+    }
+
+    public boolean isPaused(String levelId) {
+        return pausedWorlds.contains(levelId);
+    }
 }

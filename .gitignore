@@ -22,6 +22,7 @@ replay_pid*
 # secrets
 .env
 .env.*
+secrets.properties
 proxy/.dev.vars
 proxy/.dev.vars.*
 credentials/

@@ -30,6 +30,40 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// client ids come from a gitignored secrets.properties, or the matching env vars in CI.
+// a clone without either builds fine and falls back to whatever is in config.json.
+def clientDefaults = providers.provider {
+	def props = new Properties()
+	def file = rootProject.file('secrets.properties')
+	if (file.exists()) {
+		file.withInputStream { props.load(it) }
+	}
+	[
+		'dropbox.clientId'    : System.getenv('WORLDVAULT_DROPBOX_CLIENT_ID') ?: props.getProperty('dropbox.clientId', ''),
+		'google.clientId'     : System.getenv('WORLDVAULT_GOOGLE_CLIENT_ID') ?: props.getProperty('google.clientId', ''),
+		'google.tokenEndpoint': System.getenv('WORLDVAULT_GOOGLE_TOKEN_ENDPOINT') ?: props.getProperty('google.tokenEndpoint', ''),
+	]
+}
+
+def generatedClientDir = layout.buildDirectory.dir('generated/clients')
+
+def generateClientDefaults = tasks.register('generateClientDefaults') {
+	def values = clientDefaults
+	def target = generatedClientDir.map { it.file('worldvault-clients.properties') }
+	inputs.property 'clients', values
+	outputs.file target
+	doLast {
+		def out = target.get().asFile
+		out.parentFile.mkdirs()
+		def lines = values.get().collect { key, value -> "${key}=${value}" }
+		out.withWriter('UTF-8') { writer ->
+			lines.each { writer.writeLine(it) }
+		}
+	}
+}
+
+sourceSets.main.output.dir(generatedClientDir, builtBy: generateClientDefaults)
+
 tasks.register('harness', JavaExec) {
 	group = 'verification'
 	description = 'Exercises snapshot, upload, download and verification against a linked account.'

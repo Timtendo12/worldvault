@@ -24,9 +24,12 @@ export default {
 		if (request.method !== "POST") {
 			return json({ error: "method_not_allowed" }, 405);
 		}
-		if (!env.GOOGLE_CLIENT_SECRET) {
+		if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
 			return json(
-				{ error: "server_error", error_description: "GOOGLE_CLIENT_SECRET is not set" },
+				{
+					error: "server_error",
+					error_description: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must both be set",
+				},
 				500,
 			);
 		}
