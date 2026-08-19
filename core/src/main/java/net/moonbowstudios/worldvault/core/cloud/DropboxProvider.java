@@ -297,9 +297,12 @@ public final class DropboxProvider implements CloudProvider {
 		}
 	}
 
-	private static boolean isNotFound(CloudException e) {
+	static boolean isNotFound(CloudException e) {
+		if (e.status() != 409) {
+			return false;
+		}
 		String message = e.getMessage();
-		return message != null && (message.contains("path/not_found") || message.contains("not_found"));
+		return message != null && message.contains("not_found");
 	}
 
 	private static String optString(JsonObject object, String key) {

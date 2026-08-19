@@ -3,8 +3,12 @@ package net.moonbowstudios.worldvault.core.cloud;
 import net.moonbowstudios.worldvault.core.util.Http;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -77,9 +81,9 @@ public final class CloudHttp {
 					continue;
 				}
 				if (status != 429 && status < 500) {
-					throw new CloudException(describe(response), null, false);
+					throw new CloudException(describe(response), status, false);
 				}
-				last = new CloudException(describe(response), null, true);
+				last = new CloudException(describe(response), status, true);
 			}
 
 			if (!backoff.hasNext()) {
@@ -107,13 +111,30 @@ public final class CloudHttp {
 	}
 
 	private static String describe(HttpResponse<?> response) {
-		Object body = response.body();
-		String text = body instanceof String s ? s : "";
+		String text = bodyText(response);
 		if (text.length() > 400) {
 			text = text.substring(0, 400) + "…";
 		}
 		return "HTTP " + response.statusCode()
 			+ (text.isBlank() ? "" : ": " + text.replaceAll("\\s+", " "));
+	}
+
+	private static String bodyText(HttpResponse<?> response) {
+		Object body = response.body();
+		if (body instanceof String s) {
+			return s;
+		}
+		if (body instanceof byte[] bytes) {
+			return new String(bytes, StandardCharsets.UTF_8);
+		}
+		if (body instanceof Path path) {
+			try (InputStream in = Files.newInputStream(path)) {
+				return new String(in.readNBytes(2048), StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				return "";
+			}
+		}
+		return "";
 	}
 
 	@FunctionalInterface

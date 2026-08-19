@@ -10,6 +10,7 @@ import net.moonbowstudios.worldvault.core.cloud.CloudHttp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,6 +20,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CloudHttpTest {
+
+	@TempDir
+	Path temp;
 
 	private HttpServer server;
 	private String baseUrl;
@@ -82,12 +87,17 @@ class CloudHttpTest {
 
 	private void respond(String path, java.util.function.IntSupplier statusForHit,
 	                     Map<String, String> headers) {
+		respond(path, statusForHit, headers, "{}");
+	}
+
+	private void respond(String path, java.util.function.IntSupplier statusForHit,
+	                     Map<String, String> headers, String responseBody) {
 		server.createContext(path, exchange -> {
 			hits.incrementAndGet();
 			authHeaders.add(exchange.getRequestHeaders().getFirst("Authorization"));
 			headers.forEach((k, v) -> exchange.getResponseHeaders().add(k, v));
 
-			byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+			byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
 			exchange.sendResponseHeaders(statusForHit.getAsInt(), body.length);
 			try (OutputStream out = exchange.getResponseBody()) {
 				out.write(body);
@@ -137,6 +147,7 @@ class CloudHttpTest {
 		CloudException e = assertThrows(CloudException.class, () -> get("/bad"));
 		assertEquals(1, hits.get(), "a 400 will never succeed on retry; retrying just wastes time");
 		assertTrue(e.getMessage().startsWith("HTTP 400"));
+		assertEquals(400, e.status());
 	}
 
 	@Test
@@ -145,6 +156,32 @@ class CloudHttpTest {
 
 		assertEquals(308, get("/chunk").statusCode());
 		assertEquals(1, hits.get());
+	}
+
+	@Test
+	void keepsTheErrorBodyWhenItWasReadAsBytes() {
+		respond("/gone", () -> 409, Map.of(),
+			"{\"error_summary\": \"path/not_found/.\"}");
+
+		CloudException e = assertThrows(CloudException.class, () -> newClient().send(
+			() -> HttpRequest.newBuilder(URI.create(baseUrl + "/gone")),
+			HttpResponse.BodyHandlers.ofByteArray()));
+
+		assertEquals(409, e.status());
+		assertTrue(e.getMessage().contains("path/not_found"), e.getMessage());
+	}
+
+	@Test
+	void keepsTheErrorBodyWhenItWasWrittenToAFile() {
+		respond("/gone-download", () -> 409, Map.of(),
+			"{\"error_summary\": \"path/not_found/.\"}");
+
+		CloudException e = assertThrows(CloudException.class, () -> newClient().send(
+			() -> HttpRequest.newBuilder(URI.create(baseUrl + "/gone-download")),
+			HttpResponse.BodyHandlers.ofFile(temp.resolve("body.part"))));
+
+		assertEquals(409, e.status());
+		assertTrue(e.getMessage().contains("path/not_found"), e.getMessage());
 	}
 
 	@Test
