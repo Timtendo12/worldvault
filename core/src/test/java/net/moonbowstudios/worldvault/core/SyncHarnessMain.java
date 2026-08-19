@@ -10,7 +10,6 @@ import net.moonbowstudios.worldvault.core.cloud.CloudHttp;
 import net.moonbowstudios.worldvault.core.cloud.CloudProvider;
 import net.moonbowstudios.worldvault.core.cloud.DropboxProvider;
 import net.moonbowstudios.worldvault.core.cloud.GoogleDriveProvider;
-import net.moonbowstudios.worldvault.core.cloud.OneDriveProvider;
 import net.moonbowstudios.worldvault.core.sync.SnapshotCopier;
 import net.moonbowstudios.worldvault.core.sync.SyncEngine;
 import net.moonbowstudios.worldvault.core.sync.SyncStateStore;
@@ -101,13 +100,12 @@ public final class SyncHarnessMain {
 		throws Exception {
 		ProviderConfig providerConfig = config.providerConfig(config.activeProvider);
 		if (providerConfig == null) {
-			throw new IllegalStateException("No provider linked. Run: link <dropbox|onedrive|googledrive>");
+			throw new IllegalStateException("No provider linked. Run: link <dropbox|googledrive>");
 		}
 
 		CloudHttp http = new CloudHttp(new AccessTokens(providerConfig, store));
 		CloudProvider provider = switch (config.activeProvider) {
 			case "dropbox" -> new DropboxProvider(http);
-			case "onedrive" -> new OneDriveProvider(http);
 			case "googledrive" -> new GoogleDriveProvider(http);
 			default -> throw new IllegalStateException("Unknown provider " + config.activeProvider);
 		};
@@ -129,7 +127,7 @@ public final class SyncHarnessMain {
 		System.out.println("""
 			WorldVault harness: exercises the sync path with no game process.
 
-			  link <dropbox|onedrive|googledrive>   open a browser and link an account
+			  link <dropbox|googledrive>   open a browser and link an account
 			  upload <world directory>              snapshot and upload a world
 			  list                                  list the worlds in the cloud
 			  download <levelId> <target dir>       download and verify a world

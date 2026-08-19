@@ -3,7 +3,7 @@
   "id": "worldvault",
   "version": "${version}",
   "name": "WorldVault",
-  "description": "Syncs your singleplayer worlds to Google Drive, OneDrive or Dropbox, and shows the sync state on the world list.",
+  "description": "Syncs your singleplayer worlds to Google Drive or Dropbox, and shows the sync state on the world list.",
   "authors": [ "Tim Slager" ],
   "contact": {},
   "license": "MIT",

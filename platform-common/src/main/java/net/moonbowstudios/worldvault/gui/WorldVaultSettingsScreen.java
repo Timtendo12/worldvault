@@ -16,7 +16,7 @@ import java.util.List;
 
 public final class WorldVaultSettingsScreen extends Screen {
 
-	private static final List<String> PROVIDERS = List.of("dropbox", "onedrive", "googledrive");
+	private static final List<String> PROVIDERS = List.of("dropbox", "googledrive");
 
 	private final Screen parent;
 	private Component status = Component.empty();

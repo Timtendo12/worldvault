@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProviderPathTest {
@@ -29,22 +28,6 @@ class ProviderPathTest {
 		arg.addProperty("path", "/New World/manifest.json");
 
 		assertEquals("{\"path\":\"/New World/manifest.json\"}", DropboxProvider.jsonHeader(arg));
-	}
-
-	@Test
-	void oneDriveEncodesEachSegmentButKeepsSlashesStructural() {
-		String url = OneDriveProvider.itemUrl("New World/world/region/r.0.0.mca");
-
-		assertTrue(url.endsWith(":/New%20World/world/region/r.0.0.mca"), url);
-		assertFalse(url.contains("+"), "a space must be %20, not +, inside a path");
-	}
-
-	@Test
-	void oneDriveEncodesCharactersThatWouldOtherwiseBreakTheUrl() {
-		String url = OneDriveProvider.itemUrl("My World? #1/manifest.json");
-
-		assertFalse(url.contains("?"), "an unencoded ? would start the query string: " + url);
-		assertFalse(url.contains("#"), "an unencoded # would start a fragment: " + url);
 	}
 
 	@Test

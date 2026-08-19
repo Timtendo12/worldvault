@@ -36,7 +36,6 @@ public final class WorldVaultConfig {
 
 	// blank so a fork does not share another project's api quota; register your own
 	public String dropboxClientId = "";
-	public String oneDriveClientId = "";
 	public String googleClientId = "";
 
 	public String googleTokenEndpoint = "";
@@ -77,8 +76,6 @@ public final class WorldVaultConfig {
 		return switch (providerId) {
 			case "dropbox" -> dropboxClientId.isBlank() ? null
 				: ProviderConfig.dropbox(dropboxClientId);
-			case "onedrive" -> oneDriveClientId.isBlank() ? null
-				: ProviderConfig.oneDrive(oneDriveClientId);
 			case "googledrive" -> googleClientId.isBlank() || googleTokenEndpoint.isBlank() ? null
 				: ProviderConfig.googleDrive(googleClientId, googleTokenEndpoint);
 			default -> null;

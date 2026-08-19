@@ -12,7 +12,6 @@ import net.moonbowstudios.worldvault.core.cloud.CloudHttp;
 import net.moonbowstudios.worldvault.core.cloud.CloudProvider;
 import net.moonbowstudios.worldvault.core.cloud.DropboxProvider;
 import net.moonbowstudios.worldvault.core.cloud.GoogleDriveProvider;
-import net.moonbowstudios.worldvault.core.cloud.OneDriveProvider;
 import net.moonbowstudios.worldvault.core.sync.SyncEngine;
 import net.moonbowstudios.worldvault.core.sync.SyncStateStore;
 import net.moonbowstudios.worldvault.core.util.WorldVaultConfig;
@@ -94,7 +93,6 @@ public final class WorldVaultClient implements ClientModInitializer {
 		CloudHttp http = new CloudHttp(new AccessTokens(providerConfig, tokenStore));
 		CloudProvider provider = switch (config.activeProvider) {
 			case "dropbox" -> new DropboxProvider(http);
-			case "onedrive" -> new OneDriveProvider(http);
 			case "googledrive" -> new GoogleDriveProvider(http);
 			default -> null;
 		};
