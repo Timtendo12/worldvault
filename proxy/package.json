@@ -9,7 +9,7 @@
     "secret": "wrangler secret put GOOGLE_CLIENT_SECRET"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260101.0",
+    "@cloudflare/workers-types": "^5.20260815.1",
     "typescript": "^5.7.0",
     "wrangler": "^4.0.0"
   }
