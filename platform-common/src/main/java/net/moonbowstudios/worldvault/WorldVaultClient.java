@@ -14,6 +14,7 @@ import net.moonbowstudios.worldvault.core.cloud.DropboxProvider;
 import net.moonbowstudios.worldvault.core.cloud.GoogleDriveProvider;
 import net.moonbowstudios.worldvault.core.sync.SyncEngine;
 import net.moonbowstudios.worldvault.core.sync.SyncStateStore;
+import net.moonbowstudios.worldvault.core.sync.SyncStatusRegistry;
 import net.moonbowstudios.worldvault.core.util.WorldVaultConfig;
 import net.moonbowstudios.worldvault.platform.SnapshotService;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public final class WorldVaultClient implements ClientModInitializer {
 
 		try {
 			config = WorldVaultConfig.load(configDir);
-			stateStore = new SyncStateStore(configDir);
+			stateStore = new SyncStateStore(configDir, config.activeProvider);
 		} catch (IOException e) {
 			LOGGER.error("WorldVault could not read its configuration; syncing is off.", e);
 			config = new WorldVaultConfig();
@@ -79,6 +80,7 @@ public final class WorldVaultClient implements ClientModInitializer {
 
 	public void reloadProvider() {
 		engine.setProvider(null);
+		SyncStatusRegistry.clear();
 		if (!config.syncEnabled || config.activeProvider == null) {
 			return;
 		}

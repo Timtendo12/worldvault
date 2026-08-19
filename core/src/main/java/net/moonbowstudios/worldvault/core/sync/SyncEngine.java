@@ -107,9 +107,10 @@ public final class SyncEngine implements AutoCloseable {
 		LocalManifest local = LocalManifest.of(stagedWorld);
 		RemoteManifest remote = readManifest(cloud, levelId).orElse(null);
 
-		boolean localChanged = !local.hashes().equals(stateStore.lastUploadedHashes(levelId));
+		boolean localChanged =
+			!local.hashes().equals(stateStore.lastUploadedHashes(cloud.id(), levelId));
 		Decision decision = force ? Decision.UPLOAD : ConflictResolver.decide(remote,
-			stateStore.lastSync(levelId), localChanged, config.deviceId, mcVersion);
+			stateStore.lastSync(cloud.id(), levelId), localChanged, config.deviceId, mcVersion);
 
 		switch (decision) {
 			case CONFLICT -> {
@@ -145,7 +146,7 @@ public final class SyncEngine implements AutoCloseable {
 		// written last, so a crash leaves the previous manifest still describing the cloud copy
 		cloud.writeSmallFile(levelId + "/" + RemoteManifest.FILE_NAME, updated.toJson());
 
-		stateStore.record(levelId, generation, config.deviceId, local.hashes());
+		stateStore.record(cloud.id(), levelId, generation, config.deviceId, local.hashes());
 		SyncStatusRegistry.put(levelId, new WorldSyncStatus(SyncState.SYNCED, 1f, cloud.displayName()));
 	}
 
@@ -217,7 +218,8 @@ public final class SyncEngine implements AutoCloseable {
 		Files.move(staged, worldDir);
 
 		if (intoLevelId.equals(levelId)) {
-			stateStore.record(levelId, remote.generation(), remote.deviceId(), remote.files());
+			stateStore.record(cloud.id(), levelId, remote.generation(), remote.deviceId(),
+				remote.files());
 			SyncStatusRegistry.put(levelId,
 				new WorldSyncStatus(SyncState.SYNCED, 1f, cloud.displayName()));
 		} else {
@@ -253,7 +255,7 @@ public final class SyncEngine implements AutoCloseable {
 				continue;
 			}
 
-			ConflictResolver.LastSync last = stateStore.lastSync(levelId);
+			ConflictResolver.LastSync last = stateStore.lastSync(cloud.id(), levelId);
 			boolean behind = remote.get().generation() > last.generation()
 				&& !config.deviceId.equals(remote.get().deviceId());
 

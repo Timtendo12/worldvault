@@ -110,7 +110,7 @@ public final class SyncHarnessMain {
 			default -> throw new IllegalStateException("Unknown provider " + config.activeProvider);
 		};
 
-		SyncEngine engine = new SyncEngine(configDir, config, new SyncStateStore(configDir),
+		SyncEngine engine = new SyncEngine(configDir, config, new SyncStateStore(configDir, config.activeProvider),
 			MC_VERSION);
 		engine.setProvider(provider);
 		return engine;
