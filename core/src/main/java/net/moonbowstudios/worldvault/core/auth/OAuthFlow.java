@@ -23,7 +23,7 @@ public final class OAuthFlow {
 
 	private static final Duration TIMEOUT = Duration.ofMinutes(5);
 
-	private static final String CALLBACK_PATH = "/callback";
+	private static final String CALLBACK_PATH = "/";
 
 	private OAuthFlow() {
 	}
@@ -36,7 +36,7 @@ public final class OAuthFlow {
 		try {
 			CompletableFuture<Map<String, String>> callback = new CompletableFuture<>();
 			server = startLoopbackServer(callback);
-			String redirectUri = "http://127.0.0.1:" + server.getAddress().getPort() + CALLBACK_PATH;
+			String redirectUri = "http://localhost:" + server.getAddress().getPort();
 
 			URI authorizeUri = buildAuthorizeUri(provider, pkce, state, redirectUri);
 			try {
