@@ -25,9 +25,12 @@ public abstract class SelectWorldScreenMixin extends Screen {
 		super(title);
 	}
 
+	@Unique
+	private Button worldvault$cloudButton;
+
 	@Inject(method = "init", at = @At("TAIL"))
 	private void worldvault$addCloudButton(CallbackInfo ci) {
-		addRenderableWidget(Button.builder(
+		worldvault$cloudButton = Button.builder(
 				Component.translatable("worldvault.cloud.button"),
 				button -> {
 					if (this.minecraft != null) {
@@ -35,9 +38,19 @@ public abstract class SelectWorldScreenMixin extends Screen {
 					}
 				})
 			.bounds(this.width - 104, 6, 98, 20)
-			.build());
+			.build();
+		addRenderableWidget(worldvault$cloudButton);
 
 		worldvault$refreshBadges();
+	}
+
+	/** A resize calls {@code repositionElements} instead of re-running {@code init}, so the cloud button must be repositioned here too. */
+	@Inject(method = "repositionElements", at = @At("TAIL"))
+	private void worldvault$repositionCloudButton(CallbackInfo ci) {
+		if (worldvault$cloudButton != null) {
+			worldvault$cloudButton.setX(this.width - 104);
+			worldvault$cloudButton.setY(6);
+		}
 	}
 
 	@Unique

@@ -16,6 +16,8 @@ import net.moonbowstudios.worldvault.core.sync.SyncEngine;
 import net.moonbowstudios.worldvault.core.sync.SyncStateStore;
 import net.moonbowstudios.worldvault.core.sync.SyncStatusRegistry;
 import net.moonbowstudios.worldvault.core.util.WorldVaultConfig;
+import net.moonbowstudios.worldvault.command.WorldVaultCommands;
+import net.moonbowstudios.worldvault.gui.SyncToasts;
 import net.moonbowstudios.worldvault.platform.SnapshotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,9 +59,11 @@ public final class WorldVaultClient implements ClientModInitializer {
 
 		tokenStore = chooseTokenStore();
 		engine = new SyncEngine(configDir, config, stateStore, minecraftVersion());
+		SyncToasts.register();
 		reloadProvider();
 
 		SnapshotService.register(this);
+		WorldVaultCommands.register();
 		LOGGER.info("WorldVault ready. Credentials: {}. Provider: {}.",
 			tokenStore.describe(), config.activeProvider != null ? config.activeProvider : "none");
 	}
@@ -81,6 +85,7 @@ public final class WorldVaultClient implements ClientModInitializer {
 	public void reloadProvider() {
 		engine.setProvider(null);
 		SyncStatusRegistry.clear();
+		SyncToasts.reset();
 		if (!config.syncEnabled || config.activeProvider == null) {
 			return;
 		}
