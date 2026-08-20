@@ -36,6 +36,7 @@
   "worldvault.settings.while_playing": "Also sync while playing: %s",
   "worldvault.settings.interval": "Sync every %s minutes",
   "worldvault.settings.toasts": "Show sync notifications: %s",
+  "worldvault.settings.usage": "Send usage statistics: %s",
   "worldvault.command.syncing": "Syncing '%s' to your cloud drive…",
   "worldvault.command.singleplayer_only": "WorldVault only syncs your own singleplayer worlds.",
   "worldvault.command.not_linked": "No cloud account is linked. Open the WorldVault settings first.",

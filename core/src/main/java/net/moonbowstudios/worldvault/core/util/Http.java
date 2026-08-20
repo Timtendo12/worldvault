@@ -73,6 +73,21 @@ public final class Http {
 		return GSON.fromJson(response.body(), JsonObject.class);
 	}
 
+	/**
+	 * Posts a form body and discards the response. The explicit timeout matters: {@link #client()}
+	 * sets only a connect timeout, so without one a hung endpoint pins the calling thread.
+	 */
+	public static void postFormDiscarding(String url, Map<String, String> fields, Duration timeout)
+		throws java.io.IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder(java.net.URI.create(url))
+			.timeout(timeout)
+			.header("Content-Type", "application/x-www-form-urlencoded")
+			.POST(HttpRequest.BodyPublishers.ofString(formEncode(fields), StandardCharsets.UTF_8))
+			.build();
+
+		CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+	}
+
 	private static String describeOAuthError(String body) {
 		try {
 			JsonObject json = GSON.fromJson(body, JsonObject.class);

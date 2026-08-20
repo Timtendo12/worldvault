@@ -107,6 +107,22 @@ Login credentials are stored using your operating system's secure credential sto
 WorldVault uses OAuth to connect to your cloud provider, so you never enter your Google or Dropbox password into the
 mod.
 
+### What WorldVault contacts
+
+Apart from your own cloud storage, WorldVault talks to exactly two things.
+
+**A sign-in helper.** Signing in to Google Drive requires a step that cannot be done inside a mod, so that one request
+passes through a small WorldVault service. It forwards the sign-in to Google and hands the answer back. It stores
+nothing.
+
+**Usage counts.** Once per launch, WorldVault sends a randomly generated installation ID and a count of how many worlds
+it has synced. That is the entire message. It does not send or store your IP address, account details, world names, or
+which cloud provider you use — the numbers only exist so the project knows roughly how many people use it and how many
+worlds are being synced.
+
+This is on by default. To turn it off, open **WorldVault settings** and set **Send usage statistics** to OFF. The
+installation ID is separate from the device ID used for sync, and deleting `config/worldvault/config.json` resets it.
+
 ## Cloud Storage Providers
 
 ### Google Drive

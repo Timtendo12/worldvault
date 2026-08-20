@@ -33,6 +33,11 @@ public final class WorldVaultConfig {
 
     public boolean showToasts = true;
 
+    public boolean sendUsageStats = true;
+
+    // separate from deviceId, which is written into manifests in the user's own cloud drive
+    public String pingId = UUID.randomUUID().toString();
+
     public String deviceId = UUID.randomUUID().toString();
 
     public String deviceName = "This computer";
@@ -46,10 +51,13 @@ public final class WorldVaultConfig {
 
     public String googleTokenEndpoint = builtIn("google.tokenEndpoint");
 
+    private transient boolean freshInstall;
+
     public static WorldVaultConfig load(Path configDir) throws IOException {
         Path file = file(configDir);
         if (!Files.exists(file)) {
             WorldVaultConfig fresh = new WorldVaultConfig();
+            fresh.freshInstall = true;
             fresh.save(configDir);
             return fresh;
         }
@@ -61,6 +69,9 @@ public final class WorldVaultConfig {
         }
         if (config.deviceId == null || config.deviceId.isBlank()) {
             config.deviceId = UUID.randomUUID().toString();
+        }
+        if (config.pingId == null || config.pingId.isBlank()) {
+            config.pingId = UUID.randomUUID().toString();
         }
         if (config.pausedWorlds == null) {
             config.pausedWorlds = new LinkedHashSet<>();
@@ -105,6 +116,19 @@ public final class WorldVaultConfig {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    /**
+     * Not a public field on purpose: Gson would persist it into every user's config.json and make
+     * changing the URL later a migration problem. Blank without secrets.properties.
+     */
+    public static String usageEndpoint() {
+        return builtIn("usage.endpoint");
+    }
+
+    /** True only on the launch that created config.json, so a new install can stay quiet. */
+    public boolean isFreshInstall() {
+        return freshInstall;
     }
 
     public ProviderConfig providerConfig(String providerId) {

@@ -5,3 +5,9 @@ compatibility_date = "2026-08-01"
 # both set with: npx wrangler secret put <NAME>
 # GOOGLE_CLIENT_ID
 # GOOGLE_CLIENT_SECRET
+# STATS_TOKEN     - bearer token required by GET /v1/stats
+
+[[d1_databases]]
+binding = "DB"
+database_name = "worldvault-analytics"
+database_id = "ea454b03-940b-4f76-b8ea-d928dc507d16"
