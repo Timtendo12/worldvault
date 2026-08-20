@@ -15,7 +15,9 @@ import net.moonbowstudios.worldvault.core.cloud.GoogleDriveProvider;
 import net.moonbowstudios.worldvault.core.sync.SyncEngine;
 import net.moonbowstudios.worldvault.core.sync.SyncStateStore;
 import net.moonbowstudios.worldvault.core.sync.SyncStatusRegistry;
+import net.moonbowstudios.worldvault.core.util.UsagePing;
 import net.moonbowstudios.worldvault.core.util.WorldVaultConfig;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.moonbowstudios.worldvault.command.WorldVaultCommands;
 import net.moonbowstudios.worldvault.gui.SyncToasts;
 import net.moonbowstudios.worldvault.platform.SnapshotService;
@@ -64,8 +66,21 @@ public final class WorldVaultClient implements ClientModInitializer {
 
 		SnapshotService.register(this);
 		WorldVaultCommands.register();
+		registerUsagePing();
 		LOGGER.info("WorldVault ready. Credentials: {}. Provider: {}.",
 			tokenStore.describe(), config.activeProvider != null ? config.activeProvider : "none");
+	}
+
+	/** Runs after startup rather than during mod init, so it delays nothing. */
+	private void registerUsagePing() {
+		ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+			// silent on the first launch, so opting out before the second sends nothing ever
+			if (!config.sendUsageStats || config.isFreshInstall()) {
+				return;
+			}
+			UsagePing.sendAsync(WorldVaultConfig.usageEndpoint(), config.pingId,
+				stateStore.syncedWorldCount());
+		});
 	}
 
 	private TokenStore chooseTokenStore() {

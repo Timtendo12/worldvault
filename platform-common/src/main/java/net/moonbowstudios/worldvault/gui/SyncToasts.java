@@ -95,7 +95,7 @@ public final class SyncToasts {
 			return;
 		}
 
-		// the registry is written from the sync worker threads, so hop to the render thread
+		// the registry is written from worker threads, so hop to the render thread
 		client.execute(() -> {
 			ToastManager toasts = ToastBridge.manager();
 			if (toasts != null) {

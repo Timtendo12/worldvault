@@ -34,12 +34,12 @@ public final class WorldVaultSettingsScreen extends Screen {
 		WorldVaultConfig config = mod.config();
 
 		int centre = this.width / 2;
-		int y = 32;
+		int y = 26;
 		int wide = 240;
 
 		addRenderableWidget(new StringWidget(centre - wide / 2, y, wide, 12,
 			this.title, this.font));
-		y += 24;
+		y += 22;
 
 		String active = config.activeProvider;
 		for (String providerId : PROVIDERS) {
@@ -110,7 +110,16 @@ public final class WorldVaultSettingsScreen extends Screen {
 				WorldVaultClient.get().saveConfig();
 				rebuild();
 			}).bounds(centre - wide / 2, y, wide, 20).build());
-		y += 8;
+		y += 24;
+
+		addRenderableWidget(Button.builder(
+			Component.translatable("worldvault.settings.usage",
+				onOff(config.sendUsageStats)), b -> {
+				config.sendUsageStats = !config.sendUsageStats;
+				WorldVaultClient.get().saveConfig();
+				rebuild();
+			}).bounds(centre - wide / 2, y, wide, 20).build());
+		y += 6;
 
 		addRenderableWidget(new StringWidget(centre - wide / 2, y, wide, 12, status, this.font));
 

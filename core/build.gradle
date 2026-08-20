@@ -42,6 +42,7 @@ def clientDefaults = providers.provider {
 		'dropbox.clientId'    : System.getenv('WORLDVAULT_DROPBOX_CLIENT_ID') ?: props.getProperty('dropbox.clientId', ''),
 		'google.clientId'     : System.getenv('WORLDVAULT_GOOGLE_CLIENT_ID') ?: props.getProperty('google.clientId', ''),
 		'google.tokenEndpoint': System.getenv('WORLDVAULT_GOOGLE_TOKEN_ENDPOINT') ?: props.getProperty('google.tokenEndpoint', ''),
+		'usage.endpoint'      : System.getenv('WORLDVAULT_USAGE_ENDPOINT') ?: props.getProperty('usage.endpoint', ''),
 	]
 }
 

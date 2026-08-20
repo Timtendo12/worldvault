@@ -96,6 +96,17 @@ public final class SyncStateStore {
 		write(byProvider);
 	}
 
+	/**
+	 * Distinct worlds this install has ever synced, across all providers. A lifetime count, not a
+	 * snapshot: entries only go away via {@link #forget}.
+	 */
+	public synchronized int syncedWorldCount() {
+		return (int) byProvider.values().stream()
+			.flatMap(worlds -> worlds.keySet().stream())
+			.distinct()
+			.count();
+	}
+
 	public synchronized void forget(String levelId) throws IOException {
 		boolean removed = false;
 		for (Map<String, WorldState> worlds : byProvider.values()) {

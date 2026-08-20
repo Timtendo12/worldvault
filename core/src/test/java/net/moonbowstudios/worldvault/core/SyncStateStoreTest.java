@@ -21,6 +21,31 @@ class SyncStateStoreTest {
 	private static final Map<String, String> HASHES = Map.of("level.dat", "abc123");
 
 	@Test
+	void countsNothingBeforeAnythingIsSynced() throws Exception {
+		assertEquals(0, new SyncStateStore(dir, "dropbox").syncedWorldCount());
+	}
+
+	@Test
+	void countsEachWorldOnceEvenWhenSyncedToBothProviders() throws Exception {
+		SyncStateStore store = new SyncStateStore(dir, "dropbox");
+		store.record("dropbox", "Shared World", 1, "device-1", HASHES);
+		store.record("googledrive", "Shared World", 1, "device-1", HASHES);
+		store.record("dropbox", "Dropbox Only", 1, "device-1", HASHES);
+
+		// the same world under two providers is still one world
+		assertEquals(2, store.syncedWorldCount());
+	}
+
+	@Test
+	void theCountSurvivesAReload() throws Exception {
+		SyncStateStore store = new SyncStateStore(dir, "dropbox");
+		store.record("dropbox", "New World", 1, "device-1", HASHES);
+		store.record("dropbox", "Another World", 1, "device-1", HASHES);
+
+		assertEquals(2, new SyncStateStore(dir, "dropbox").syncedWorldCount());
+	}
+
+	@Test
 	void oneProvidersStateIsInvisibleToAnother() throws Exception {
 		SyncStateStore store = new SyncStateStore(dir, "dropbox");
 		store.record("dropbox", "New World", 4, "device-1", HASHES);
