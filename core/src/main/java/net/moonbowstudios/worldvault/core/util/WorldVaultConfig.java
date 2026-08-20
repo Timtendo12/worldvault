@@ -31,6 +31,8 @@ public final class WorldVaultConfig {
 
     public boolean syncWhilePlaying = true;
 
+    public boolean showToasts = true;
+
     public String deviceId = UUID.randomUUID().toString();
 
     public String deviceName = "This computer";

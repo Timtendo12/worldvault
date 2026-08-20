@@ -146,6 +146,44 @@ public final class SnapshotService {
 		return openLevelId;
 	}
 
+	/** @return the display name of the open world, or null when none is open. */
+	public static String openDisplayName() {
+		return openDisplayName;
+	}
+
+	/**
+	 * Saves and uploads the open world right now, ignoring the per-world pause and "sync while
+	 * playing" setting since this is only reached by an explicit request.
+	 *
+	 * @return false if no singleplayer world is open
+	 */
+	public static boolean syncNow() {
+		String levelId = openLevelId;
+		Path levelPath = openLevelPath;
+		String displayName = openDisplayName;
+		if (levelId == null || levelPath == null) {
+			return false;
+		}
+
+		IntegratedServer server = Minecraft.getInstance().getSingleplayerServer();
+		if (server == null) {
+			return false;
+		}
+
+		// push the automatic cycle out, so it does not immediately repeat what was just asked for
+		scheduleNext();
+
+		server.execute(() -> {
+			try {
+				server.saveEverything(true, true, false);
+			} catch (RuntimeException e) {
+				WorldVaultClient.LOGGER.warn("Save before snapshot failed; syncing anyway.", e);
+			}
+			snapshotAndQueue(levelId, displayName, levelPath);
+		});
+		return true;
+	}
+
 	private static WorldVaultConfig config() {
 		return mod.config();
 	}

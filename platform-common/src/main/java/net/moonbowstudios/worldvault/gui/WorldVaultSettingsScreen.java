@@ -1,6 +1,7 @@
 package net.moonbowstudios.worldvault.gui;
 
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageWidget;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -33,17 +34,12 @@ public final class WorldVaultSettingsScreen extends Screen {
 		WorldVaultConfig config = mod.config();
 
 		int centre = this.width / 2;
-		int y = 40;
+		int y = 32;
 		int wide = 240;
 
 		addRenderableWidget(new StringWidget(centre - wide / 2, y, wide, 12,
 			this.title, this.font));
-		y += 22;
-
-		addRenderableWidget(new StringWidget(centre - wide / 2, y, wide, 12,
-			Component.translatable("worldvault.settings.credentials", mod.tokenStore().describe()),
-			this.font));
-		y += 22;
+		y += 24;
 
 		String active = config.activeProvider;
 		for (String providerId : PROVIDERS) {
@@ -65,10 +61,15 @@ public final class WorldVaultSettingsScreen extends Screen {
 
 			button.active = configured && (linked || mod.tokenStore().isAvailable());
 			addRenderableWidget(button);
+			ImageWidget logo = ProviderIcons.widgetFor(providerId,
+				centre - wide / 2 - ProviderIcons.SIZE - 4, y + 2);
+			if (logo != null) {
+				addRenderableWidget(logo);
+			}
 			y += 24;
 		}
 
-		y += 8;
+		y += 6;
 
 		addRenderableWidget(Button.builder(
 			Component.translatable("worldvault.settings.on_close",
@@ -100,7 +101,16 @@ public final class WorldVaultSettingsScreen extends Screen {
 				WorldVaultClient.get().saveConfig();
 				rebuild();
 			}).bounds(centre - wide / 2, y, wide, 20).build());
-		y += 30;
+		y += 24;
+
+		addRenderableWidget(Button.builder(
+			Component.translatable("worldvault.settings.toasts",
+				onOff(config.showToasts)), b -> {
+				config.showToasts = !config.showToasts;
+				WorldVaultClient.get().saveConfig();
+				rebuild();
+			}).bounds(centre - wide / 2, y, wide, 20).build());
+		y += 8;
 
 		addRenderableWidget(new StringWidget(centre - wide / 2, y, wide, 12, status, this.font));
 
@@ -111,6 +121,8 @@ public final class WorldVaultSettingsScreen extends Screen {
 	private void rebuild() {
 		this.rebuildWidgets();
 	}
+
+
 
 	private void link(ProviderConfig providerConfig) {
 		if (providerConfig == null) {
