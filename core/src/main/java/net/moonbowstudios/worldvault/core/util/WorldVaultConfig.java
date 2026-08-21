@@ -35,6 +35,8 @@ public final class WorldVaultConfig {
 
     public boolean sendUsageStats = true;
 
+    public boolean hasSeenOnboarding = false;
+
     // separate from deviceId, which is written into manifests in the user's own cloud drive
     public String pingId = UUID.randomUUID().toString();
 

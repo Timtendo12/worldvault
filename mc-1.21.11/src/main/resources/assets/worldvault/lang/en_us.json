@@ -60,5 +60,9 @@
   "worldvault.conflict.keep_both": "Keep both (download the cloud copy alongside)",
   "worldvault.conflict.uploading": "Uploading this computer's copy…",
   "worldvault.conflict.downloading": "Downloading the cloud copy…",
-  "worldvault.conflict.keeping_both": "Downloading as '%s'…"
+  "worldvault.conflict.keeping_both": "Downloading as '%s'…",
+  "worldvault.onboarding.title": "Thanks for installing WorldDrive!",
+  "worldvault.onboarding.body": "We really appreciate you trying it out. Link a cloud drive to automatically back up and sync your worlds across devices.",
+  "worldvault.onboarding.link_now": "Link a cloud drive now",
+  "worldvault.onboarding.later": "Maybe later"
 }
