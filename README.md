@@ -64,7 +64,7 @@ Only one cloud provider can be connected at a time.
 
 ## Supported versions
 
-**Minecraft 1.21.11 & 26.x**
+**Minecraft 1.21.11 & 26.1–26.3**
 
 Fabric API is required.
 

@@ -1,8 +1,8 @@
 package net.moonbowstudios.worldvault.gui;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.ImageWidget;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.moonbowstudios.worldvault.core.sync.SyncStatusRegistry;
@@ -11,6 +11,8 @@ import net.moonbowstudios.worldvault.core.sync.WorldSyncStatus;
 public final class SyncBadge {
 
 	private static final int MARGIN = 4;
+
+	private static ImageWidget widget;
 
 	private SyncBadge() {
 	}
@@ -30,7 +32,13 @@ public final class SyncBadge {
 		int x = entry.getContentRight() - SyncIcons.SIZE - MARGIN;
 		int y = entry.getContentY() + (entry.getContentHeight() - SyncIcons.SIZE) / 2;
 
-		extractor.blitSprite(RenderPipelines.GUI_TEXTURED, icon, x, y, SyncIcons.SIZE, SyncIcons.SIZE);
+		if (widget == null) {
+			widget = ImageWidget.sprite(SyncIcons.SIZE, SyncIcons.SIZE, icon);
+		} else {
+			widget.updateResource(icon);
+		}
+		widget.setPosition(x, y);
+		widget.extractRenderState(extractor, mouseX, mouseY, 0f);
 
 		if (isOver(mouseX, mouseY, x, y)) {
 			Component tooltip = SyncIcons.tooltipFor(status);
